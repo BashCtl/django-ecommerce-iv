@@ -17,9 +17,24 @@ def get_order_items(request):
         items = order.orderitem_set.all()
         cart_items = order.get_cart_items
     else:
+        try:
+            cart = json.loads(request.COOKIES['cart'])
+        except:
+            cart = {}
+
         items = []
         order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
         cart_items = order['get_cart_items']
+
+        for key in cart:
+            cart_items += cart[key]['quantity']
+        
+            product = Product.objects.get(id=key)
+            total = (product.price * cart[key]['quantity'])
+
+            order['get_cart_total'] +=total
+            order['get_cart_items'] += cart[key]['quantity']
+            
     return order, items, cart_items
 
 
@@ -70,6 +85,8 @@ def update_item(request):
     return JsonResponse('Item was added.', safe=False)
 
 # @csrf_exempt
+
+
 def process_order(request):
     transaction_id = datetime.datetime.now().timestamp()
     data = json.loads(request.body)
@@ -77,14 +94,14 @@ def process_order(request):
     if request.user.is_authenticated:
         customer = request.user.customer
         order, created = Order.objects.get_or_create(
-        customer=customer, complete=False)
+            customer=customer, complete=False)
         total = float(data['form']['total'])
         order.transaction_id = transaction_id
 
         if total == float(order.get_cart_total):
             order.complete = True
         order.save()
-    
+
         if order.shipping == True:
             print(data['shipping'])
             ShippingAddress.objects.create(
@@ -95,7 +112,7 @@ def process_order(request):
                 state=data['shipping']['state'],
                 zipcode=data['shipping']['zipcode'],
             )
-        
+
     else:
         print('User is not loged in.')
     return JsonResponse('Payment complete', safe=False)
