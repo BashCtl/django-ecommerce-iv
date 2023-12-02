@@ -101,7 +101,6 @@
 
 			function submitFormData() {
 				console.log('Payment button clicked');
-
 				let userFormData = {
 					'name':null,
 					'email':null,
@@ -109,7 +108,7 @@
 				}
 
 				let shippingInfo = {
-					'aaddress':null,
+					'address':null,
 					'city':null,
 					'state': null,
 					'zipcode': null
@@ -122,7 +121,7 @@
 					shippingInfo.zipcode = form.zipcode.value;
 				}
 
-				if (user === 'AnonymouseUser') {
+				if (user === 'AnonymousUser') {
 					userFormData.name = form.name.value;
 					userFormData.email = form.email.value;
 				}
@@ -140,6 +139,10 @@
 				.then((data) => {
 					console.log('Success:', data);
 					alert('Transaction completed');
+
+					cart = {}
+					document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/";
+
 					window.location.href = "{% url 'store' %}";
 				});
 
