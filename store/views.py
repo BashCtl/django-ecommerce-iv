@@ -5,76 +5,38 @@ import json
 import datetime
 
 from .models import Product, Order, OrderItem, ShippingAddress
+from .utils import get_cart_data
 
 # Create your views here.
 
 
-def get_order_items(request):
-    if request.user.is_authenticated:
-        customer = request.user.customer
-        order, created = Order.objects.get_or_create(
-            customer=customer, complete=False)
-        items = order.orderitem_set.all()
-        cart_items = order.get_cart_items
-    else:
-        try:
-            cart = json.loads(request.COOKIES['cart'])
-        except:
-            cart = {}
-
-        items = []
-        order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
-        cart_items = order['get_cart_items']
-
-        for key in cart:
-            try:
-                cart_items += cart[key]['quantity']
-
-                product = Product.objects.get(id=key)
-                total = (product.price * cart[key]['quantity'])
-
-                order['get_cart_total'] += total
-                order['get_cart_items'] += cart[key]['quantity']
-
-                item = {
-                    'product': {
-                        'id': product.id,
-                        'name': product.name,
-                        'price': product.price,
-                        'imageURL': product.imageURL
-                    },
-                    'quantity': cart[key]['quantity'],
-                    'get_total': total,
-                }
-
-                items.append(item)
-
-                if product.digital == False:
-                    order['shipping'] = True
-            except:
-                pass
-
-    return order, items, cart_items
-
-
 def store(request):
-    order, items, cart_items = get_order_items(request)
+    data = get_cart_data(request)
+    cart_items = data['cart_items']
     products = Product.objects.all()
-    context = {'products': products, 'cart_items': cart_items}
 
+    context = {'products': products, 'cart_items': cart_items}
     return render(request, 'store/store.html', context)
 
 
 def cart(request):
 
-    order, items, cart_items = get_order_items(request)
+    data = get_cart_data(request)
+    order = data['order']
+    items = data['items']
+    cart_items = data['cart_items']
+
     context = {'items': items, 'order': order, 'cart_items': cart_items}
     return render(request, 'store/cart.html', context)
 
 
 def checkout(request):
 
-    order, items, cart_items = get_order_items(request)
+    data = get_cart_data(request)
+    order = data['order']
+    items = data['items']
+    cart_items = data['cart_items']
+
     context = {'items': items, 'order': order, 'cart_items': cart_items}
     return render(request, 'store/checkout.html', context)
 
