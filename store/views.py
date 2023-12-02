@@ -27,14 +27,33 @@ def get_order_items(request):
         cart_items = order['get_cart_items']
 
         for key in cart:
-            cart_items += cart[key]['quantity']
-        
-            product = Product.objects.get(id=key)
-            total = (product.price * cart[key]['quantity'])
+            try:
+                cart_items += cart[key]['quantity']
 
-            order['get_cart_total'] +=total
-            order['get_cart_items'] += cart[key]['quantity']
-            
+                product = Product.objects.get(id=key)
+                total = (product.price * cart[key]['quantity'])
+
+                order['get_cart_total'] += total
+                order['get_cart_items'] += cart[key]['quantity']
+
+                item = {
+                    'product': {
+                        'id': product.id,
+                        'name': product.name,
+                        'price': product.price,
+                        'imageURL': product.imageURL
+                    },
+                    'quantity': cart[key]['quantity'],
+                    'get_total': total,
+                }
+
+                items.append(item)
+
+                if product.digital == False:
+                    order['shipping'] = True
+            except:
+                pass
+
     return order, items, cart_items
 
 
